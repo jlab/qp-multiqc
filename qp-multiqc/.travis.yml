@@ -1,0 +1,48 @@
+language: python
+sudo: false
+env:
+    - PYTHON_VERSION=2.7
+before_install:
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b
+  - export PATH=/home/travis/miniconda3/bin:$PATH
+  # Update conda itself
+  - conda update --yes conda
+install:
+  # Install Qiita
+  - travis_retry conda create --yes -n qiita python=2.7 pip nose flake8
+    pyzmq networkx pyparsing natsort mock future libgfortran
+    'pandas>=0.18' 'scipy>0.13.0' 'numpy>=1.7' 'h5py>=2.3.1'
+  - source activate qiita
+  - pip install sphinx sphinx-bootstrap-theme coveralls ipython[all]==2.4.1
+  - pip install https://github.com/biocore/qiita/archive/master.zip --process-dependency-links
+  # as we don't need redbiom we are going to use the default redis port
+  - sed 's/PORT = 7777/PORT = 6379/g' $HOME/miniconda3/envs/qiita/lib/python2.7/site-packages/qiita_core/support_files/config_test.cfg > config_test.cfg
+  - export QIITA_CONFIG_FP=${PWD}/config_test.cfg
+  - export QIITA_SERVER_CERT=$HOME/miniconda3/envs/qiita/lib/python2.7/site-packages/qiita_core/support_files/server.crt
+  - qiita-env make --no-load-ontologies
+  - source deactivate
+  # Install this plugin
+  - travis_retry conda create --yes -n env_name python=$PYTHON_VERSION pip nose flake8 coverage
+  - source activate env_name
+  # Install the Qiita Client
+  - pip install https://github.com/qiita-spots/qiita_client/archive/master.zip
+  - travis_retry pip install .
+before_script:
+  - source activate qiita_env
+  - qiita pet webserver start &
+script:
+  - source activate env_name
+  # give enough time to the webserver to start
+  - sleep 10
+  - configure_qp_multiqc --env-script "source activate env_name" --server-cert $QIITA_SERVER_CERT
+  - nosetests --with-doctest --with-coverage
+  - flake8 qp_multiqc setup.py scripts
+addons:
+  postgresql: "9.3"
+services:
+  - redis-server
+  - postgresql
+after_success:
+  - coveralls
