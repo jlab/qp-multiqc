@@ -8,12 +8,29 @@
 
 from qiita_client import QiitaPlugin, QiitaCommand
 
+from .multiqc import run_multiqc
+
 # TODO: include relevant imports here
 # from .mycommand import my_command_function
 
 # Initialize the plugin
-plugin = QiitaPlugin('multiqc', '0.0.1',
-                     'Qiita Plugin: multiqc')
+plugin = QiitaPlugin(
+    'multiqc', # name
+    '0.0.1', # version 
+    'Qiita Plugin: run multiqc for quality control of sequence data',) # description'
+
+req_params = {'Demultiplexed sequences': ('artifact', ['Demultiplexed'])}
+
+outputs = {'multiqc': 'directory'} # output artifact type??? TODO: check this
+
+run_multiqc_cmd = QiitaCommand(
+    'Run Multiqc',  # The command name
+    'Generates MultiQC Reports from Fastq Sequences',  # The command description
+    run_multiqc,  # function : callable
+    req_params, 
+    outputs)
+
+plugin.register_command(run_multiqc_cmd)
 
 # TODO: Define your commands. Here is an example on how to define one command.
 # You can define as many as needed
@@ -65,4 +82,3 @@ plugin = QiitaPlugin('multiqc', '0.0.1',
 # available only in the analysis pipeline or it can also be available in the
 # study processing pipeline
 
-plugin.register_command(cmd)
