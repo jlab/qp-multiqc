@@ -1,18 +1,6 @@
-# -----------------------------------------------------------------------------
-# Copyright (c) 2024--, The Qiita Development Team.
-#
-# Distributed under the terms of the BSD 3-clause License.
-#
-# The full license is in the file LICENSE, distributed with this software.
-# -----------------------------------------------------------------------------
-
-# -----------------------------------------------------------------------------
-# Copyright (c) 2025, Dein Name oder Projekt
-# Distributed under the terms of the BSD 3-Clause License.
-# -----------------------------------------------------------------------------
-
 import os
 import glob
+import shutil
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from os.path import join
@@ -21,26 +9,27 @@ from qiita_client.util import system_call
 import qiita_files
 from qiita_files.demux import to_per_sample_files
 
-
+# TODO: extract function into bash script
 def run_fastqc(file, fastqc_env, fastqc_outdir):
-    """Ein einzelner FastQC-Lauf"""
+    """Runs FastQC on a single file."""
     cmd = ["conda", "run", "-n", fastqc_env, "fastqc", file, "--outdir", fastqc_outdir]
     subprocess.run(cmd, check=True)
 
-
 def run_multiqc(qclient, job_id, parameters, out_dir):
-    """Erstellt einen MultiQC-Report aus einer .demux-Datei"""
-    NUM_STEPS = 5
-    qclient.update_job_step(job_id, f"Step 1 of {NUM_STEPS}: Vorbereitung")
+    """Generates a MultiQC report from a demux artifact."""
 
-    # Eingabeparameter
+    NUM_STEPS = 5
+
+    # Step 1: Preparation
+    qclient.update_job_step(job_id, f"Step 1 of {NUM_STEPS}: Preparation")
+
+    # Input parameters
     demux_fp = parameters['Input demux artifact']
     fastqc_env = parameters['FastQC conda env name']
     multiqc_env = parameters['MultiQC conda env name']
-    min_per_sample = parameters.get('Minimum samples per feature', 1)
     threads = parameters.get('Number of parallel FastQC jobs', 4)
 
-    # Arbeitsverzeichnisse
+    # Create working directories
     split_outdir = join(out_dir, 'split_fastq')
     fastqc_outdir = join(out_dir, 'fastqc_reports')
     multiqc_outdir = join(out_dir, 'multiqc_report')
@@ -49,37 +38,50 @@ def run_multiqc(qclient, job_id, parameters, out_dir):
     os.makedirs(fastqc_outdir, exist_ok=True)
     os.makedirs(multiqc_outdir, exist_ok=True)
 
-    # Schritt 2: .demux splitten
-    qclient.update_job_step(job_id, f"Step 2 of {NUM_STEPS}: Splitten der Demux-Datei")
+    # Step 2: Split demux file into per-sample fastq
+    qclient.update_job_step(job_id, f"Step 2 of {NUM_STEPS}: Split demux file")
     to_per_sample_files(demux_fp, out_dir=split_outdir, out_format='fastq')
 
-    # Alle FASTQ-Dateien suchen
+    # Find all FASTQ files
     suffixes = ("*.fastq", "*.fq", "*.fastq.gz", "*.fq.gz")
     fastq_files = [f for pattern in suffixes for f in glob.glob(join(split_outdir, pattern))]
-    if len(fastq_files) == 0:
-        return False, None, "Keine FASTQ-Dateien gefunden."
 
-    # Schritt 3: FastQC parallel ausführen
-    qclient.update_job_step(job_id, f"Step 3 of {NUM_STEPS}: FastQC auf {len(fastq_files)} Dateien starten (parallel)")
+    if not fastq_files:
+        return False, None, "No FASTQ files found after splitting demux."
+
+    # Step 3: Run FastQC in parallel
+    qclient.update_job_step(job_id, f"Step 3 of {NUM_STEPS}: Run FastQC")
     with ThreadPoolExecutor(max_workers=threads) as executor:
-        for file in fastq_files:
-            executor.submit(run_fastqc, file, fastqc_env, fastqc_outdir)
+        futures = [executor.submit(run_fastqc, file, fastqc_env, fastqc_outdir) for file in fastq_files]
+        for future in futures:
+            future.result()  # collect exceptions early
 
-    # Schritt 4: MultiQC erstellen
-    qclient.update_job_step(job_id, f"Step 4 of {NUM_STEPS}: MultiQC Report erstellen")
+    # Step 4: Run MultiQC
+    qclient.update_job_step(job_id, f"Step 4 of {NUM_STEPS}: Run MultiQC")
     cmd_multiqc = f"conda run -n {multiqc_env} multiqc -o {multiqc_outdir} {fastqc_outdir}"
     std_out, std_err, return_code = system_call(cmd_multiqc)
-    if return_code != 0:
-        return False, None, f"Fehler bei MultiQC: {std_err}"
 
-    # Schritt 5: Outputs vorbereiten
-    qclient.update_job_step(job_id, f"Step 5 of {NUM_STEPS}: Outputs zurückgeben")
+    if return_code != 0:
+        return False, None, f"Error running MultiQC:\n{std_err}"
+
+    # Cleanup: Remove FastQC reports
+    try:
+        shutil.rmtree(fastqc_outdir)
+    except OSError as e:
+        print(f"Warning: Failed to delete FastQC output folder: {e}")
+
+    # Cleanup: Remove split FASTQ files
+    try:
+        shutil.rmtree(split_outdir)
+    except OSError as e:
+        print(f"Warning: Failed to delete split FASTQ files: {e}")
+
+    # Step 5: Return outputs
+    qclient.update_job_step(job_id, f"Step 5 of {NUM_STEPS}: Returning outputs")
     outputs = [
         (join(multiqc_outdir, "multiqc_report.html"), 'html'),
         (join(multiqc_outdir, "multiqc_data"), 'directory'),
     ]
-
     ainfo = [ArtifactInfo('MultiQC report', 'html', outputs)]
 
     return True, ainfo, ""
-

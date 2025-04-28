@@ -27,8 +27,8 @@ run_multiqc_cmd = QiitaCommand(
     'Run Multiqc',  # The command name
     'Generates MultiQC Reports from Fastq Sequences',  # The command description
     run_multiqc,  # function : callable
-    req_params, 
-    outputs)
+    req_params, # required parameters
+    outputs) # output Artifact 
 
 plugin.register_command(run_multiqc_cmd)
 
