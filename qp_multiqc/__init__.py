@@ -21,7 +21,7 @@ plugin = QiitaPlugin(
 
 req_params = {'Demultiplexed sequences': ('artifact', ['Demultiplexed'])}
 
-outputs = {'multiqc': 'directory'} # output artifact type??? TODO: check this
+outputs = {'MultiQC Report': 'html'} # output artifact type??? TODO: check this
 
 run_multiqc_cmd = QiitaCommand(
     'Run Multiqc',  # The command name

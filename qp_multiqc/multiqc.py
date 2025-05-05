@@ -82,6 +82,11 @@ def run_multiqc(qclient, job_id, parameters, out_dir):
         (join(multiqc_outdir, "multiqc_report.html"), 'html'),
         (join(multiqc_outdir, "multiqc_data"), 'directory'),
     ]
-    ainfo = [ArtifactInfo('MultiQC report', 'html', outputs)]
+    ainfo = [ArtifactInfo('MultiQC Report', 'html', outputs)]
 
     return True, ainfo, ""
+
+# TODO: Add generate_summary_html function???
+def generate_summary_html(out_dir):
+    """Generates a summary HTML file from the MultiQC report."""
+    pass
