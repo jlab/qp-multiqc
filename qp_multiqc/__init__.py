@@ -20,15 +20,25 @@ plugin = QiitaPlugin(
     'Qiita Plugin: run multiqc for quality control of sequence data',) # description'
 
 req_params = {'Demultiplexed sequences': ('artifact', ['Demultiplexed'])}
-
-outputs = {'MultiQC Report': 'html'} # output artifact type??? TODO: check this
+opt_params = {
+    'Wordcloud width': ['integer', '400']
+}
+outputs = {'MultiQC Report':'html'} # output artifact type??? TODO: check this
+dflt_param_set = {
+    'Defaults': {
+        'Wordcloud width': 400,
+    }
+}
 
 run_multiqc_cmd = QiitaCommand(
     'Run Multiqc',  # The command name
     'Generates MultiQC Reports from Fastq Sequences',  # The command description
     run_multiqc,  # function : callable
     req_params, # required parameters
-    outputs) # output Artifact 
+    opt_params, # optional parameters
+    outputs, # output Artifact 
+    dflt_param_set) # default parameter set
+
 
 plugin.register_command(run_multiqc_cmd)
 
