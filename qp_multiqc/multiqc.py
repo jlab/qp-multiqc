@@ -26,7 +26,7 @@ def run_multiqc(qclient, job_id, parameters, out_dir):
     # Input parameters
     demux_fp = parameters['Demultiplexed sequences']
     #multiqc_env = parameters['MultiQC conda env name'] # TODO: add this to parameters?
-    multiqc_env = "multiqc"
+    multiqc_env = "multiqc" # TODO: delete envs in this script
     threads = parameters.get('Number of parallel FastQC jobs', 4)
 
     # Create working directories
@@ -82,7 +82,7 @@ def run_multiqc(qclient, job_id, parameters, out_dir):
         (join(multiqc_outdir, "multiqc_report.html"), 'html'),
         (join(multiqc_outdir, "multiqc_data"), 'directory'),
     ]
-    ainfo = [ArtifactInfo('MultiQC Report', 'html', outputs)]
+    ainfo = [ArtifactInfo('MultiQC Report', 'BIOM', outputs)]
 
     return True, ainfo, ""
 

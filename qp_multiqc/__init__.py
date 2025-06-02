@@ -20,15 +20,9 @@ plugin = QiitaPlugin(
     'Qiita Plugin: run multiqc for quality control of sequence data',) # description'
 
 req_params = {'Demultiplexed sequences': ('artifact', ['Demultiplexed'])}
-opt_params = {
-    'Wordcloud width': ['integer', '400']
-}
-outputs = {'MultiQC Report':'html'} # output artifact type??? TODO: check this
-dflt_param_set = {
-    'Defaults': {
-        'Wordcloud width': 400,
-    }
-}
+opt_params = {'Wordcloud width': ['integer', '400']}
+outputs = {'MultiQC Report':'BIOM'} # output artifact type??? TODO: check this
+dflt_param_set = {'Defaults': {'Wordcloud width': 400,}}
 
 run_multiqc_cmd = QiitaCommand(
     'Run Multiqc',  # The command name
