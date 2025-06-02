@@ -10,9 +10,9 @@ import qiita_files
 from qiita_files.demux import to_per_sample_files
 
 # TODO: extract function into bash script
-def run_fastqc(file, multiqc_env, fastqc_outdir):
+def run_fastqc(file, fastqc_outdir):
     """Runs FastQC on a single file."""
-    cmd = ["conda", "run", "-n", multiqc_env, "fastqc", file, "--outdir", fastqc_outdir]
+    cmd = ["fastqc", file, "--outdir", fastqc_outdir]
     subprocess.run(cmd, check=True)
 
 def run_multiqc(qclient, job_id, parameters, out_dir):
@@ -25,8 +25,6 @@ def run_multiqc(qclient, job_id, parameters, out_dir):
 
     # Input parameters
     demux_fp = parameters['Demultiplexed sequences']
-    #multiqc_env = parameters['MultiQC conda env name'] # TODO: add this to parameters?
-    multiqc_env = "multiqc" # TODO: delete envs in this script
     threads = parameters.get('Number of parallel FastQC jobs', 4)
 
     # Create working directories
@@ -52,13 +50,13 @@ def run_multiqc(qclient, job_id, parameters, out_dir):
     # Step 3: Run FastQC in parallel
     qclient.update_job_step(job_id, f"Step 3 of {NUM_STEPS}: Run FastQC")
     with ThreadPoolExecutor(max_workers=threads) as executor:
-        futures = [executor.submit(run_fastqc, file, multiqc_env, fastqc_outdir) for file in fastq_files]
+        futures = [executor.submit(run_fastqc, file, fastqc_outdir) for file in fastq_files]
         for future in futures:
             future.result()  # collect exceptions early
 
     # Step 4: Run MultiQC
     qclient.update_job_step(job_id, f"Step 4 of {NUM_STEPS}: Run MultiQC")
-    cmd_multiqc = f"conda run -n {multiqc_env} multiqc -o {multiqc_outdir} {fastqc_outdir}"
+    cmd_multiqc = f"multiqc -o {multiqc_outdir} {fastqc_outdir}"
     std_out, std_err, return_code = system_call(cmd_multiqc)
 
     if return_code != 0:
