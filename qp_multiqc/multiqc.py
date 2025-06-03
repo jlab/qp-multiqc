@@ -25,7 +25,7 @@ def run_multiqc(qclient, job_id, parameters, out_dir):
 
     # Input parameters
     artifact_id = parameters['Demultiplexed sequences']
-    artefact_filepath = qclient.get("/qiita_db/artifacts/%s/" % artifact_id)
+    artifact_filepath = qclient.get("/qiita_db/artifacts/%s/" % artifact_id)
     threads = parameters.get('Number of parallel FastQC jobs', 4)
 
     # Create working directories
@@ -39,7 +39,7 @@ def run_multiqc(qclient, job_id, parameters, out_dir):
 
     # Step 2: Split demux file into per-sample fastq
     qclient.update_job_step(job_id, f"Step 2 of {NUM_STEPS}: Split demux file")
-    to_per_sample_files(artefact_filepath, out_dir=split_outdir, out_format='fastq')
+    to_per_sample_files(artifact_filepath, out_dir=split_outdir, out_format='fastq')
 
     # Find all FASTQ files
     suffixes = ("*.fastq", "*.fq", "*.fastq.gz", "*.fq.gz")
