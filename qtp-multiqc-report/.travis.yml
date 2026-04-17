@@ -36,9 +36,9 @@ script:
   - source activate env_name
   # give enough time to the webserver to start
   - sleep 10
-  - configure_qp_multiqc --env-script "source activate env_name" --server-cert $QIITA_SERVER_CERT
+  - configure_qtp_multiqc_report --env-script "source activate env_name" --server-cert $QIITA_SERVER_CERT
   - nosetests --with-doctest --with-coverage
-  - flake8 qp_multiqc setup.py scripts
+  - flake8 qtp_multiqc_report setup.py scripts
 addons:
   postgresql: "9.3"
 services:

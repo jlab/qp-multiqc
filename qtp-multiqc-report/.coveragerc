@@ -4,9 +4,9 @@
 omit =
     */test*
     */__init__.py
-source = qp_multiqc
+source = qtp_multiqc_report
 branch = True
-include = */qp_multiqc/*
+include = */qtp_multiqc_report/*
 
 [report]
 exclude_lines =

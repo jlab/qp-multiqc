@@ -19,7 +19,7 @@ classes = """
     Topic :: Software Development :: Libraries :: Application Frameworks
     Topic :: Software Development :: Libraries :: Python Modules
     Programming Language :: Python
-    Programming Language :: Python :: 2.7
+    Programming Language :: Python :: 3.9
     Programming Language :: Python :: Implementation :: CPython
     Operating System :: POSIX :: Linux
     Operating System :: MacOS :: MacOS X
@@ -30,19 +30,19 @@ with open('README.rst') as f:
 
 classifiers = [s.strip() for s in classes.split('\n') if s]
 
-setup(name='multiqc Qiita Plugin',
+setup(name='MultiQCReport',
       version=__version__,
       long_description=long_description,
       license="BSD",
-      description='Qiita Type Plugin: multiqc',
+      description='Qiita Type Plugin: MultiQCReport',
       author="Tobias Gruetgen",
       author_email="tobias.gruetgen@bioinfsys.uni-giessen.de",
-      url='https://github.com/jlab/qp-multiqc',
+      url='https://github.com/jlab/qtp-multiqc-report',
       test_suite='nose.collector',
-      packages=['qp_multiqc'],
-      package_data={'qp_multiqc': ['support_files/config_file.cfg']},
+      packages=['qtp_multiqc_report'],
+      package_data={'qtp_multiqc_report': ['support_files/config_file.cfg']},
       scripts=glob('scripts/*'),
       extras_require={'test': ["nose >= 0.10.1", "pep8"]},
-      install_requires=['click >= 3.3', 'qiita_client'],
+      install_requires=['click >= 3.3', 'qiita_client', 'qiita_files'],
       classifiers=classifiers
       )
