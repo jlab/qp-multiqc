@@ -79,5 +79,4 @@ def validate(qclient, job_id, parameters, out_dir):
     # job completion in Qiita's validator flow.
     filepaths.append((summary_fp, 'html_summary'))
 
-    artifact_name = parameters.get('name', 'MultiQC Report')
-    return True, [ArtifactInfo(artifact_name, 'MultiQCReport', filepaths)], ""
+    return True, [ArtifactInfo(None, 'MultiQCReport', filepaths)], ""
